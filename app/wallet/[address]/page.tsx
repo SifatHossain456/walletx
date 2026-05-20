@@ -1,8 +1,8 @@
 export const dynamic = 'force-dynamic'
 
-import { getChainBalances, getWalletNFTs, resolveENS, scoreWallet, shortAddr, fmtUsd, type ChainBalance, type NFTItem } from '@/lib/chains'
+import { getChainBalances, getWalletNFTs, resolveENS, resolveENSToAddress, scoreWallet, shortAddr, fmtUsd, type ChainBalance, type NFTItem } from '@/lib/chains'
 import { notFound } from 'next/navigation'
-import { ExternalLink, Wallet, Image as ImageIcon, Activity, Trophy, ArrowLeft, Copy } from 'lucide-react'
+import { ExternalLink, Wallet, Image as ImageIcon, Activity, Trophy, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 function ScoreRing({ score, grade, color }: { score: number; grade: string; color: string }) {
@@ -89,18 +89,32 @@ export default async function WalletPage({ params }: { params: Promise<{ address
 
   if (!isValidAddr && !isENS) notFound()
 
-  const [balances, nftData, ensName] = await Promise.all([
-    getChainBalances(address as `0x${string}`),
-    getWalletNFTs(address),
-    isValidAddr ? resolveENS(address) : Promise.resolve(null),
+  let resolvedAddress: `0x${string}`
+  let ensLabel: string | null = null
+
+  if (isENS) {
+    const addr = await resolveENSToAddress(address)
+    if (!addr) notFound()
+    resolvedAddress = addr
+    ensLabel = address
+  } else {
+    resolvedAddress = address as `0x${string}`
+  }
+
+  const [balances, nftData, reverseName] = await Promise.all([
+    getChainBalances(resolvedAddress),
+    getWalletNFTs(resolvedAddress),
+    isValidAddr ? resolveENS(resolvedAddress) : Promise.resolve(null),
   ])
+
+  const ensName = ensLabel ?? reverseName
 
   const totalUsd = balances.reduce((s, b) => s + b.usdValue, 0)
   const totalTxns = balances.reduce((s, b) => s + b.txCount, 0)
   const activeChains = balances.filter(b => b.txCount > 0).length
   const { score, grade, color, breakdown } = scoreWallet(balances, nftData.count, totalUsd)
 
-  const displayName = ensName ?? shortAddr(address)
+  const displayName = ensName ?? shortAddr(resolvedAddress)
 
   return (
     <div className="space-y-6">
@@ -120,8 +134,8 @@ export default async function WalletPage({ params }: { params: Promise<{ address
               <div className="pb-1">
                 <h1 className="text-xl font-black">{displayName}</h1>
                 <div className="flex items-center gap-2 mt-1">
-                  <p className="text-xs text-[#4b5563] font-mono">{shortAddr(address)}</p>
-                  <a href={`https://etherscan.io/address/${address}`} target="_blank" rel="noopener noreferrer"
+                  <p className="text-xs text-[#4b5563] font-mono">{shortAddr(resolvedAddress)}</p>
+                  <a href={`https://etherscan.io/address/${resolvedAddress}`} target="_blank" rel="noopener noreferrer"
                     className="text-[#4b5563] hover:text-[#6366f1] transition-colors">
                     <ExternalLink className="w-3 h-3" />
                   </a>

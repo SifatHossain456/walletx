@@ -64,9 +64,22 @@ export async function getChainBalances(address: `0x${string}`): Promise<ChainBal
     137: prices.matic, 10: prices.eth, 56: prices.bnb, 43114: prices.avax,
   }
 
+  const RPC_URLS: Record<number, string> = {
+    1:     'https://cloudflare-eth.com',
+    8453:  'https://mainnet.base.org',
+    42161: 'https://arb1.arbitrum.io/rpc',
+    137:   'https://polygon-rpc.com',
+    10:    'https://mainnet.optimism.io',
+    56:    'https://bsc-dataseed1.binance.org',
+    43114: 'https://api.avax.network/ext/bc/C/rpc',
+  }
+
   const results = await Promise.allSettled(
     CHAINS.map(async ({ chain, label, symbol, color, explorer }) => {
-      const client = createPublicClient({ chain, transport: http() })
+      const client = createPublicClient({
+        chain,
+        transport: http(RPC_URLS[chain.id], { timeout: 8_000, retryCount: 1 }),
+      })
       const [balance, txCount] = await Promise.all([
         client.getBalance({ address }),
         client.getTransactionCount({ address }),
@@ -123,9 +136,17 @@ interface NFTRaw {
 
 export async function resolveENS(address: string): Promise<string | null> {
   try {
-    const client = createPublicClient({ chain: mainnet, transport: http() })
+    const client = createPublicClient({ chain: mainnet, transport: http('https://cloudflare-eth.com', { timeout: 8_000 }) })
     const name = await client.getEnsName({ address: address as `0x${string}` })
     return name
+  } catch { return null }
+}
+
+export async function resolveENSToAddress(name: string): Promise<`0x${string}` | null> {
+  try {
+    const client = createPublicClient({ chain: mainnet, transport: http('https://cloudflare-eth.com', { timeout: 8_000 }) })
+    const addr = await client.getEnsAddress({ name })
+    return addr
   } catch { return null }
 }
 
