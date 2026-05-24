@@ -17,8 +17,19 @@ export default function HomePage() {
   const router = useRouter()
   const { address, isConnected } = useAccount()
 
+  const [inputError, setInputError] = useState('')
+
   const go = (addr: string) => {
-    if (addr.trim()) router.push(`/wallet/${addr.trim()}`)
+    const trimmed = addr.trim()
+    if (!trimmed) return
+    const isAddr = /^0x[0-9a-fA-F]{40}$/.test(trimmed)
+    const isENS  = trimmed.endsWith('.eth') && trimmed.length > 4
+    if (!isAddr && !isENS) {
+      setInputError('Enter a valid 0x address or .eth name')
+      return
+    }
+    setInputError('')
+    router.push(`/wallet/${trimmed}`)
   }
 
   const features = [
@@ -45,17 +56,25 @@ export default function HomePage() {
         </p>
 
         <form onSubmit={e => { e.preventDefault(); go(input) }}
-          className="flex gap-2 max-w-lg mx-auto">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#374151]" />
-            <input value={input} onChange={e => setInput(e.target.value)}
-              placeholder="0x… or vitalik.eth"
-              className="w-full bg-[#0a0e1a] border border-[#0f1629] focus:border-[#6366f1] rounded-xl pl-12 pr-4 py-4 text-base transition-colors font-mono" />
+          className="flex flex-col gap-2 max-w-lg mx-auto">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#374151]" />
+              <input value={input} onChange={e => { setInput(e.target.value); setInputError('') }}
+                placeholder="0x… or vitalik.eth"
+                aria-label="Wallet address or ENS name"
+                aria-describedby={inputError ? 'addr-error' : undefined}
+                aria-invalid={!!inputError}
+                className={`w-full bg-[#0a0e1a] border ${inputError ? 'border-red-500/60' : 'border-[#0f1629] focus:border-[#6366f1]'} rounded-xl pl-12 pr-4 py-4 text-base transition-colors font-mono`} />
+            </div>
+            <button type="submit"
+              className="px-6 py-4 bg-[#6366f1] text-white font-bold rounded-xl hover:bg-[#4f46e5] transition-colors flex items-center gap-2">
+              Analyze <ArrowRight className="w-4 h-4" />
+            </button>
           </div>
-          <button type="submit"
-            className="px-6 py-4 bg-[#6366f1] text-white font-bold rounded-xl hover:bg-[#4f46e5] transition-colors flex items-center gap-2">
-            Analyze <ArrowRight className="w-4 h-4" />
-          </button>
+          {inputError && (
+            <p id="addr-error" role="alert" className="text-xs text-red-400 pl-1">{inputError}</p>
+          )}
         </form>
 
         {isConnected && address && (

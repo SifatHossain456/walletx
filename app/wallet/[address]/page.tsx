@@ -25,7 +25,7 @@ function ScoreRing({ score, grade, color }: { score: number; grade: string; colo
   )
 }
 
-function ChainCard({ b }: { b: ChainBalance }) {
+function ChainCard({ b, address }: { b: ChainBalance; address: string }) {
   const hasBalance = b.balance > 0n
   return (
     <div className={`bg-[#0a0e1a] border rounded-xl p-4 transition-all ${hasBalance ? 'border-[#0f1629] hover:border-[#6366f1]/40' : 'border-[#0a0e1a] opacity-60'}`}>
@@ -34,8 +34,9 @@ function ChainCard({ b }: { b: ChainBalance }) {
           <div className="w-3 h-3 rounded-full" style={{ background: b.color }} />
           <span className="text-xs font-semibold">{b.label}</span>
         </div>
-        <a href={`${b.explorer}/address/${b.txCount > 0 ? '' : ''}`}
+        <a href={`${b.explorer}/address/${address}`}
           target="_blank" rel="noopener noreferrer"
+          aria-label={`View on ${b.label} explorer`}
           className="text-[#374151] hover:text-[#6366f1] transition-colors">
           <ExternalLink className="w-3 h-3" />
         </a>
@@ -123,7 +124,7 @@ export default async function WalletPage({ params }: { params: Promise<{ address
       </Link>
 
       {/* Identity Card */}
-      <div className="bg-[#0a0e1a] border border-[#0f1629] rounded-2xl overflow-hidden">
+      <header className="bg-[#0a0e1a] border border-[#0f1629] rounded-2xl overflow-hidden">
         <div className="h-20 bg-gradient-to-r from-[#6366f1]/20 via-[#8b5cf6]/10 to-transparent" />
         <div className="px-6 pb-6 -mt-8">
           <div className="flex items-end justify-between gap-4 flex-wrap">
@@ -136,6 +137,7 @@ export default async function WalletPage({ params }: { params: Promise<{ address
                 <div className="flex items-center gap-2 mt-1">
                   <p className="text-xs text-[#4b5563] font-mono">{shortAddr(resolvedAddress)}</p>
                   <a href={`https://etherscan.io/address/${resolvedAddress}`} target="_blank" rel="noopener noreferrer"
+                    aria-label="View on Etherscan"
                     className="text-[#4b5563] hover:text-[#6366f1] transition-colors">
                     <ExternalLink className="w-3 h-3" />
                   </a>
@@ -158,7 +160,7 @@ export default async function WalletPage({ params }: { params: Promise<{ address
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Score */}
@@ -192,7 +194,7 @@ export default async function WalletPage({ params }: { params: Promise<{ address
             <span className="text-xs text-[#4b5563] ml-auto">{fmtUsd(totalUsd)} total</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {balances.map(b => <ChainCard key={b.chainId} b={b} />)}
+            {balances.map(b => <ChainCard key={b.chainId} b={b} address={resolvedAddress} />)}
           </div>
         </div>
       </div>
