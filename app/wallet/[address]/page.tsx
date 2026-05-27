@@ -1,7 +1,19 @@
 export const dynamic = 'force-dynamic'
 
+import type { Metadata } from 'next'
 import { getChainBalances, getWalletNFTs, resolveENS, resolveENSToAddress, scoreWallet, shortAddr, fmtUsd, type ChainBalance, type NFTItem } from '@/lib/chains'
 import { notFound } from 'next/navigation'
+
+export async function generateMetadata({ params }: { params: Promise<{ address: string }> }): Promise<Metadata> {
+  const { address } = await params
+  const displayAddr = address.endsWith('.eth')
+    ? address
+    : `${address.slice(0, 8)}…${address.slice(-6)}`
+  return {
+    title: displayAddr,
+    description: `Multi-chain wallet portfolio for ${displayAddr} — balances, NFTs, and on-chain activity score.`,
+  }
+}
 import { ExternalLink, Wallet, Image as ImageIcon, Activity, Trophy, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
