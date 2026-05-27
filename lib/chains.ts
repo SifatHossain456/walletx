@@ -33,19 +33,6 @@ const NATIVE_PRICES: Record<number, number> = {
   43114: 0,   // AVAX
 }
 
-async function getEthPrice(): Promise<number> {
-  try {
-    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum,matic-network,binancecoin,avalanche-2&vs_currencies=usd', { next: { revalidate: 60 } })
-    const d = await r.json()
-    return {
-      eth: d['ethereum']?.usd ?? 3000,
-      matic: d['matic-network']?.usd ?? 0.8,
-      bnb: d['binancecoin']?.usd ?? 600,
-      avax: d['avalanche-2']?.usd ?? 35,
-    } as unknown as number
-  } catch { return 3000 }
-}
-
 export async function getChainBalances(address: `0x${string}`): Promise<ChainBalance[]> {
   let prices: Record<string, number> = { eth: 3000, matic: 0.8, bnb: 600, avax: 35 }
   try {
